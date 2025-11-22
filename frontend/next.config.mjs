@@ -11,12 +11,47 @@ const nextConfig = {
   },
   images: {
     unoptimized: true,
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**.pinata.cloud',
+      },
+      {
+        protocol: 'https',
+        hostname: 'gateway.pinata.cloud',
+      },
+      {
+        protocol: 'https',
+        hostname: '**.mypinata.cloud',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ipfs.io',
+      },
+      {
+        protocol: 'https',
+        hostname: 'dweb.link',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cloudflare-ipfs.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'trustless-gateway.link',
+      },
+      {
+        protocol: 'https',
+        hostname: 'ipfs.filebase.io',
+      },
+    ],
   },
-  // Acknowledge we're using webpack config intentionally
-  // Turbopack doesn't fully support all webpack plugins yet
   turbopack: {},
   webpack: (config, { isServer, webpack }) => {
-    // Fixes for Privy/WalletConnect dependencies
+    // Base app required externals
+    config.externals.push("pino-pretty", "lokijs", "encoding");
+
+    // Fixes for wagmi/WalletConnect dependencies
     if (!isServer) {
       // Provide fallbacks for Node.js modules in the browser
       config.resolve.fallback = {

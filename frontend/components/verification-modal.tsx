@@ -2,8 +2,8 @@
 
 import { Check, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { useState, useRef, useEffect } from "react"
-import { usePrivy, useWallets } from "@privy-io/react-auth"
+import { useState, useEffect } from "react"
+import { SignInModal } from "@coinbase/cdp-react"
 import { useToast } from "@/components/ui/use-toast"
 
 interface VerificationModalProps {
@@ -12,33 +12,11 @@ interface VerificationModalProps {
 }
 
 export function VerificationModal({ result, onClose }: VerificationModalProps) {
-  const { authenticated, login } = usePrivy()
-  const { wallets } = useWallets()
   const { toast } = useToast()
   const [phase, setPhase] = useState<"speedometer" | "mint">("speedometer")
   const [speed, setSpeed] = useState(0)
-  const [isConnecting, setIsConnecting] = useState(false)
-  const loginInProgress = useRef(false)
-
-  const embeddedWallet = wallets.find((wallet) => wallet.walletClientType === "privy")
-  const connectedWallet = wallets.find((wallet) => wallet.address)
-  const activeWallet = embeddedWallet || connectedWallet
-  const chainId = activeWallet?.chainId ||
-                  (activeWallet as any)?.chain?.id ||
-                  (activeWallet as any)?.chainId ||
-                  undefined
-
-  const getChainIdNumber = (chainId: string | number | undefined): number | null => {
-    if (!chainId) return null
-
-    if (typeof chainId === "string") {
-      return chainId.startsWith("0x")
-        ? parseInt(chainId, 16)
-        : parseInt(chainId, 10)
-    }
-
-    return chainId
-  }
+  const [showSignIn, setShowSignIn] = useState(false)
+  const [isConnected, setIsConnected] = useState(false)
 
   // Animate speed counter
   useEffect(() => {
@@ -58,38 +36,31 @@ export function VerificationModal({ result, onClose }: VerificationModalProps) {
     }
   }, [phase, result.speed])
 
-  const handleLogin = async () => {
-    // Prevent multiple simultaneous login attempts
-    if (loginInProgress.current || isConnecting) {
-      return
-    }
-
-    try {
-      loginInProgress.current = true
-      setIsConnecting(true)
-      await login()
-    } catch (error) {
-      console.error("Login error:", error)
-    } finally {
-      // Reset after a delay to allow Privy to process
-      setTimeout(() => {
-        loginInProgress.current = false
-        setIsConnecting(false)
-      }, 1000)
-    }
+  const handleConnect = () => {
+    setShowSignIn(true)
   }
 
-  const handleSignAndPublish = () => {
-    const chainIdNum = getChainIdNumber(chainId)
+  const handleSignInSuccess = () => {
+    setShowSignIn(false)
+    setIsConnected(true)
+  }
 
-    if (!chainIdNum || chainIdNum !== 8453) {
+  const handleSignAndPublish = async () => {
+    if (!isConnected) {
       toast({
-        title: "Switch to Base network",
-        description: "Please switch your wallet to the Base network before publishing this signal.",
+        title: "Wallet not connected",
+        description: "Please create a wallet first",
         variant: "destructive",
       })
       return
     }
+
+    // TODO: Add your actual transaction logic here
+    // For now, just show success message
+    toast({
+      title: "Signal published!",
+      description: `You earned ${result.reward} VERI tokens`,
+    })
 
     onClose()
   }
@@ -157,7 +128,7 @@ export function VerificationModal({ result, onClose }: VerificationModalProps) {
               <span className="font-jetbrains text-3xl font-bold text-cyber-cyan">+{result.reward} VERI</span>
             </div>
 
-            {authenticated ? (
+            {isConnected ? (
               <Button
                 onClick={handleSignAndPublish}
                 className="w-full rounded-full bg-cyber-cyan text-void hover:bg-cyber-cyan/90"
@@ -166,19 +137,27 @@ export function VerificationModal({ result, onClose }: VerificationModalProps) {
               </Button>
             ) : (
               <div>
-                <p className="mb-4 text-sm text-foreground/60">Connect your wallet to earn rewards</p>
+                <p className="mb-4 text-sm text-foreground/60">Create a wallet to earn rewards</p>
                 <Button
-                  onClick={handleLogin}
+                  onClick={handleConnect}
                   className="w-full rounded-full bg-cyber-cyan text-void hover:bg-cyber-cyan/90"
-                  disabled={isConnecting}
                 >
-                  {isConnecting ? "Connecting..." : "Connect Wallet"}
+                  Create Wallet
                 </Button>
               </div>
             )}
           </div>
         )}
       </div>
+
+      {/* Sign In Modal */}
+      {showSignIn && (
+        <SignInModal 
+          isOpen={showSignIn}
+          onClose={() => setShowSignIn(false)}
+          onSuccess={handleSignInSuccess}
+        />
+      )}
     </>
   )
 }
