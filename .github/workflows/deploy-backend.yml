@@ -43,12 +43,12 @@ jobs:
           script: |
             set -e
 
-            REPO_DIR=/opt/verifi
+            # Use home directory to avoid sudo requirements
+            REPO_DIR="${HOME}/verifi"
 
             # Ensure repo exists on VM
             if [ ! -d "$REPO_DIR/.git" ]; then
-              sudo mkdir -p "$REPO_DIR"
-              sudo chown "$USER":"$USER" "$REPO_DIR"
+              mkdir -p "$REPO_DIR"
               git clone https://github.com/Tsatsch/verifi.git "$REPO_DIR"
             fi
 
