@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
-import { Map, AdvancedMarker } from "@vis.gl/react-google-maps"
+import { useState, useEffect } from "react"
+import { Map, AdvancedMarker, useMap } from "@vis.gl/react-google-maps"
+import { useLocation } from "@/hooks/use-location"
 
 const mockSignals = [
   // Strong signals - Excellent WiFi spots
@@ -145,19 +146,33 @@ function WiFiMarker({
   )
 }
 
+function MapRecenter({ lat, lng }: { lat: number; lng: number }) {
+  const map = useMap()
+  
+  useEffect(() => {
+    if (map) {
+      map.panTo({ lat, lng })
+    }
+  }, [map, lat, lng])
+  
+  return null
+}
+
 export function MapView({ onMarkerClick }: { onMarkerClick: (signal: any) => void }) {
   const [hoveredId, setHoveredId] = useState<number | null>(null)
   const [mapLoaded, setMapLoaded] = useState(false)
+  const { coordinates, isLoading } = useLocation()
 
-  // San Francisco center coordinates
-  const center = { lat: 37.7749, lng: -122.4194 }
+  // San Francisco center coordinates as fallback
+  const defaultCenter = { lat: 37.7749, lng: -122.4194 }
+  const center = coordinates || defaultCenter
 
   return (
     <div className="absolute inset-0 z-0 bg-void">
       {/* Google Map Container */}
       <div className="absolute inset-0 h-full w-full">
         <Map
-          defaultCenter={center}
+          defaultCenter={defaultCenter}
           defaultZoom={14}
           mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID}
           disableDefaultUI={true}
@@ -168,6 +183,9 @@ export function MapView({ onMarkerClick }: { onMarkerClick: (signal: any) => voi
             setMapLoaded(true)
           }}
         >
+        {/* Recenter map when user location is found */}
+        {coordinates && <MapRecenter lat={coordinates.lat} lng={coordinates.lng} />}
+
         {/* WiFi Signal Markers */}
         {mockSignals.map((signal) => (
           <WiFiMarker
