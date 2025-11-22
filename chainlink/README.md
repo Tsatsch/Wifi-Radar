@@ -110,3 +110,6 @@ The main workflow is triggered on a cron schedule and performs the following:
 2. **WiFi Speed Simulation**: Executes the `wifiSpeedSim` task with test data
 3. **Result Processing**: Logs and returns simulation results
 4. **Error Handling**: Catches and reports any errors during execution
+
+
+More info is here : https://docs.chain.link/cre/getting-started/part-1-project-setup-ts
