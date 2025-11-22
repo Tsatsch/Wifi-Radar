@@ -1,0 +1,67 @@
+---
+alwaysApply: true
+---
+
+# Veri-Fi Frontend – Cursor Rules
+
+You are an AI pair‑programmer working in the `verifi/frontend` Next.js app.
+Keep answers **concise and action‑oriented** unless the user explicitly asks for deep explanations.
+
+## Project context
+
+- This is a **Next.js 16 / React 19 / TypeScript** app using the **App Router** (`frontend/app`).
+- Styling is done with **Tailwind CSS v4**, `clsx`, and `tailwind-merge` via the `cn` helper in `frontend/lib/utils.ts`.
+- UI primitives live in `frontend/components/ui` (shadcn-style components built on top of Radix).
+- Shared hooks live in `frontend/hooks`, and higher-level UI/components live in `frontend/components`.
+
+## General AI behavior
+
+- **Preserve existing patterns**: Match current code style, naming, and folder structure instead of inventing new ones.
+- **Prefer minimal, focused changes**: Touch as few files as needed; avoid large refactors unless the user asks.
+- **Explain risky changes**: If a change affects routing, auth, data flow, or design system, briefly call it out and why.
+- **Don’t introduce new libraries** without the user’s approval; use what’s already in `package.json`.
+- **Keep types strict**: Prefer explicit types and type-safe patterns over `any`.
+
+## Next.js & React guidelines
+
+- Use the **App Router conventions**:
+  - Pages and layouts live under `frontend/app`.
+  - Default to **React Server Components**; only add `"use client"` when truly needed (e.g., browser-only APIs, event handlers, 3rd‑party UI libs).
+- For navigation and routing, use `next/navigation` (e.g. `useRouter`, `useSearchParams`) rather than legacy `next/router`.
+- When adding async logic for data loading, prefer **server components, server helpers, or API routes** instead of heavy client-side fetching where possible.
+- Keep React components **pure and declarative**; avoid side effects in render paths.
+
+## Components & props
+
+- Place **reusable UI primitives** in `components/ui` and **feature-level building blocks** in `components` (e.g. `map-view`, `sidebar-leaderboard`).
+- Use **PascalCase** for React component files and component names.
+- Define props with **TypeScript object types**, e.g. `type ComponentNameProps = { … }`, and annotate function parameters with that type.
+- Prefer **named exports** for components; only use default exports where Next.js requires it (e.g. `app` route components).
+- Keep components focused:
+  - UI-only components should not own complex business logic.
+  - Extract non-visual logic into hooks in `hooks/` when it’s reused or complex.
+
+## Styling & design system
+
+- Prefer **Tailwind utility classes** composed with the `cn` helper from `lib/utils.ts` for conditional classes.
+- Reuse existing **`components/ui` primitives** before adding new ones; if you must add a new primitive, mirror existing patterns (props naming, variants, and structure).
+- Avoid inline styles except for truly dynamic, computed layout cases that Tailwind cannot easily express.
+- Ensure new UI follows the existing **dark/light theme support** and respects any theme provider in `components/theme-provider.tsx`.
+
+## Forms, validation, and feedback
+
+- Use **`react-hook-form` + `zod`** for non-trivial forms; wire them using `@hookform/resolvers/zod` when validation is needed.
+- Surface user feedback with the existing toast utilities (`hooks/use-toast` and any related components) instead of introducing new notification systems.
+- Keep form components reusable and controlled; separate field presentation from submission side effects when possible.
+
+## Maps, charts, and data visualizations
+
+- For maps, build on the existing `google-maps-provider` and `map-view` components; avoid reinitializing map providers in many places.
+- For charts and data visualizations, follow established patterns in existing chart components (e.g. using `recharts`) before introducing new abstractions.
+
+## Testing, quality, and DX
+
+- When changing behavior, **add or update tests** if/when a testing setup exists; otherwise, at least suggest test cases in your explanation.
+- Use existing `npm`/`pnpm` scripts from `package.json` (`dev`, `build`, `lint`) when suggesting commands.
+- When you generate code, ensure it **passes TypeScript and ESLint** to the best of your ability.
+
