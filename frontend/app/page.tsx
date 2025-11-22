@@ -13,6 +13,7 @@ export default function Page() {
   const [selectedSignal, setSelectedSignal] = useState<any>(null)
   const [isScanning, setIsScanning] = useState(false)
   const [scanResult, setScanResult] = useState<any>(null)
+  const [walletConnected, setWalletConnected] = useState(false)
 
   const handleScan = () => {
     setIsScanning(true)
@@ -34,7 +35,7 @@ export default function Page() {
         <MapView onMarkerClick={setSelectedSignal} />
 
         {/* HUD Layers */}
-        <TopNav />
+        <TopNav walletConnected={walletConnected} onWalletToggle={() => setWalletConnected(!walletConnected)} />
 
         <BottomControls onScan={handleScan} isScanning={isScanning} />
 
@@ -51,6 +52,7 @@ export default function Page() {
           <VerificationModal
             result={scanResult}
             onClose={() => setScanResult(null)}
+            walletConnected={walletConnected}
           />
         )}
       </div>
