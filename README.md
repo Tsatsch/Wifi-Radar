@@ -1,136 +1,96 @@
 # WiFi-Radar
 
-Map-based WiFi signal verification powered by Web3. Discover, verify, and earn rewards for connectivity data.
+A **public good** platform for discovering and verifying WiFi hotspots with blockchain-backed proof of location. Built on Base, powered by Chainlink, and stored on Filecoin Onchain Cloud.
 
-## Features
+## Purpose & Value
 
-### 🔐 Embedded Smart Wallets
-- **Social Login**: Create wallet with Google, Apple, or email
-- **No Extensions Needed**: Works in any browser
-- **ERC-4337 Smart Wallets**: Account abstraction for advanced features
-- **Gasless Transactions**: Users don't need crypto to get started
+Veri-Fi solves a critical problem in WiFi discovery: **trust and data freshness**. Traditional WiFi maps suffer from outdated information and fake locations. Veri-Fi provides:
 
-### 🗺️ Connectivity Verification
-- Map-based WiFi signal discovery
-- Real-time speed testing
-- Signal strength verification
-- Earn rewards for verified signals
+- **Verifiable WiFi Hubs**: Every location is cryptographically verified through Chainlink's Proof of Location
+- **Current & Accurate Data**: Community-driven updates ensure WiFi spots stay up-to-date
+- **Transparent & Trustless**: All data is stored on-chain and IPFS, making it publicly auditable
+- **Public Good**: Free and open for everyone to use and contribute to
 
-### ⚡ Powered by Base
-- Built on Base blockchain (L2)
-- Low transaction costs
-- Fast confirmations
-- Paymaster support for sponsored transactions
+## How It Works in detail
 
-## Quick Start
+### User Flow
+
+1. **Create a WiFi Station**
+   - Users can create a new WiFi station by placing a pin on the map
+   - The app automatically calculates WiFi speed through real-time testing
+   - User submits the location with speed data
+
+2. **Data Storage on IPFS/Filecoin**
+   - WiFi data (location, speed, metadata) is stored on IPFS
+   - Data is pinned to Filecoin's onchain cloud for permanent, decentralized storage
+   - A Content Identifier (CID) is generated for the data
+
+3. **Proof of Location Verification**
+   - Backend Chainlink Workflows verify the user's claimed location
+   - **Critical Security**: Prevents users from claiming false locations (e.g., "I'm at the airport" while at home)
+   - Chainlink compares the user's IP geolocation with their claimed coordinates
+   - Only verified locations proceed to the next step
+
+4. **On-Chain Registration**
+   - If verification passes, the location is added to the smart contract on Base
+   - Contract address: `0x15405de75e94ce71ef3a19cde0b0ae784319217d`
+   - The contract stores the IPFS CID reference (not the full data, keeping gas costs low)
+   - The submitter is recorded as the owner of the WiFi hub
+
+5. **Data Aggregation & Visualization**
+   - The Graph indexes blockchain events to aggregate WiFi spot data
+   - Map displays all verified WiFi locations with real-time speed data
+   - Users can see current WiFi speeds and contribute updates
+
+### Community-Driven Updates
+
+- **Continuous Speed Tests**: Community members can run speed tests at existing locations
+- **Up-to-Date Information**: Regular contributions keep WiFi spot data current
+- **Leaderboard**: High contributors are recognized and may receive future perks
+
+## Incentives & Rewards
+
+### First Creator Benefits
+- Users who create a WiFi position first are recorded as the **owner** in the smart contract
+- Ownership is recognized when the location is validated by other users
+- First creators establish the foundation for community verification
+
+### Contributor Recognition
+- **Leaderboard**: Users with high contributions are prominently displayed
+- **Future Perks**: Top contributors may receive additional benefits (coming soon)
+- **Community Impact**: Help others discover reliable WiFi connections
+
+## Technical Architecture
+
+### Frontend
+- **Framework**: Next.js 16, React 19, TypeScript
+- **Maps**: Google Maps API for interactive map visualization
+- **UI**: Tailwind CSS v4, shadcn/ui components
+- **Wallets**: Coinbase Embedded Wallets (ERC-4337 smart wallets)
+
+### Blockchain & Infrastructure
+- **Network**: Base (Ethereum L2) - Low fees, fast transactions
+- **Smart Contract**: `WifiRegistry.sol` on Base (see in contracts/ folder)
+  - Contract Address: `0x15405de75e94ce71ef3a19cde0b0ae784319217d`
+  - Stores IPFS CIDs and verification status
+  - Emits events for The Graph indexing
+- **Storage**: IPFS + Filecoin Pin (decentralized, permanent storage)
+- **Verification**: Chainlink Workflows for Proof of Location
+- **Indexing**: The Graph for querying and aggregating WiFi spot data
+
+### Smart Wallet Features
+- **Social Login**: Sign in with Google, Apple, or SMS
+- **No Extensions**: Works in any browser
+- **Gasless Onboarding**: Paymaster covers gas fees for new users
+- **No Prerequisites**: Users don't need tokens to get started
+
+## Quick Start development
 
 ### Prerequisites
 - Node.js 18+
 - CDP Project ID from [Coinbase Developer Platform](https://portal.cdp.coinbase.com/products/embedded-wallets)
 - Google Maps API Key
-
-### Installation
-
-1. **Clone and navigate to frontend:**
-   ```bash
-   cd verifi/frontend
-   ```
-
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
-
-3. **Configure environment:**
-   ```bash
-   cp env.example .env.local
-   ```
-
-4. **Add your keys to `.env.local`:**
-   ```bash
-   NEXT_PUBLIC_CDP_PROJECT_ID=your_project_id_here
-   NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_maps_key_here
-   ```
-
-5. **Run development server:**
-   ```bash
-   npm run dev
-   ```
-
-6. **Open [http://localhost:3000](http://localhost:3000)**
-
-## User Experience
-
-### First-Time User Flow
-1. **User lands on Radar-Fi** → Sees map with WiFi signals
-2. **Runs speed test** → Verification modal appears
-3. **Clicks "Create Wallet"** → Chooses social login (Google, Apple, email)
-4. **Authenticates** → Smart wallet created automatically
-5. **Signs & publishes** → Earns VERI tokens (gasless!)
-
-### Wallet Creation
-When creating a wallet, users can choose:
-- 🔴 **Google** - Sign in with Google account
-- 🍎 **Apple** - Sign in with Apple ID
-- 📧 **Email** - Continue with email/SMS
-
-The wallet is created instantly using:
-- **ERC-4337** account abstraction
-- **Multi-party computation (MPC)** for key management
-- **Social recovery** using chosen authentication method
-
-## Architecture
-
-### Tech Stack
-- **Frontend**: Next.js 16, React 19, TypeScript
-- **Blockchain**: Base (Ethereum L2)
-- **Wallets**: Coinbase Embedded Wallets via `@coinbase/cdp-react`
-- **UI**: Tailwind CSS, shadcn/ui, Radix UI
-- **Maps**: Google Maps API
-
-### Smart Wallet Features
-- **Gasless transactions** via paymaster
-- **Batch operations** - multiple actions in one transaction
-- **Session keys** - temporary permissions
-- **Social recovery** - recover wallet with social login
-- **No seed phrases** - managed securely by Coinbase
-
-## Development
-
-### Project Structure
-```
-frontend/
-├── app/
-│   ├── rootProvider.tsx    # Wagmi + OnchainKit setup
-│   ├── layout.tsx           # Root layout
-│   ├── page.tsx             # Main app
-│   └── globals.css          # Global styles
-├── components/
-│   ├── wallet-button.tsx    # Embedded wallet UI
-│   ├── map-view.tsx         # Google Maps
-│   ├── verification-modal.tsx
-│   └── ui/                  # shadcn components
-└── env.example              # Environment template
-```
-
-### Environment Variables
-
-**Required:**
-- `NEXT_PUBLIC_CDP_PROJECT_ID` - From [CDP Portal](https://portal.cdp.coinbase.com/products/embedded-wallets)
-- `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` - From Google Cloud Console
-
-**Optional:**
-- `NEXT_PUBLIC_URL` - Your deployment URL (for wallet callbacks)
-- `NEXT_PUBLIC_NETWORK` - `mainnet` or `testnet` (default: testnet)
-
-### Available Scripts
-
-```bash
-npm run dev      # Start development server
-npm run build    # Build for production
-npm run start    # Start production server
-npm run lint     # Run ESLint
-```
+- Filecoin Pin configuration (for IPFS storage)
 
 ## Deployment
 
@@ -141,8 +101,9 @@ npm run lint     # Run ESLint
 3. **Add environment variables:**
    - `NEXT_PUBLIC_CDP_PROJECT_ID`
    - `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY`
-   - `NEXT_PUBLIC_URL` (your Vercel URL)
+   - `NEXT_PUBLIC_URL` (vercel url)
    - `NEXT_PUBLIC_NETWORK=mainnet`
+   - Filecoin Pin configuration
 4. **Deploy!**
 
 ### Enable Paymaster (Production)
@@ -154,51 +115,23 @@ For gasless transactions in production:
 3. Request production access
 4. Add paymaster endpoint to environment variables
 
-## Getting CDP Project ID
+## Community & Contribution
 
-1. Visit [https://portal.cdp.coinbase.com/products/embedded-wallets](https://portal.cdp.coinbase.com/products/embedded-wallets)
-2. Sign in or create account
-3. Click **Create New Project**
-4. Configure your project:
-   - **App Name**: Veri-Fi
-   - **Allowed Origins**: Add your domain(s)
-5. Copy your **Project ID**
-6. Add to `.env.local`
+Veri-Fi is a **public good** that thrives on community participation:
 
-This enables:
-- ✅ Embedded smart wallets
-- ✅ Social authentication (Google, Apple, email, SMS)
-- ✅ ERC-4337 account abstraction
-- ✅ Gasless transactions
-- ✅ Custom theming
+- **Report WiFi Spots**: Help others discover reliable connections
+- **Update Existing Spots**: Keep speed data current with regular tests
+- **Verify Locations**: Contribute to the verification network
+- **Build Together**: Open source and community-driven
 
-## Troubleshooting
+We welcome contributions, feedback, and ideas to make Veri-Fi better for everyone!
 
-### Wallet won't create
-- ✅ Check `NEXT_PUBLIC_CDP_PROJECT_ID` is correct
-- ✅ Verify your domain is in allowed origins (CDP Portal)
-- ✅ Enable cookies in browser
-- ✅ Try a different browser
-- ✅ Clear browser cache
+## Resources and Literature we found especially helpful
 
-### Map doesn't load
-- ✅ Verify `NEXT_PUBLIC_GOOGLE_MAPS_API_KEY` is set
-- ✅ Enable Maps JavaScript API in Google Cloud Console
-- ✅ Check API key restrictions
-
-### Build errors
-- ✅ Run `npm install` to ensure dependencies are installed
-- ✅ Delete `.next` folder and rebuild
-- ✅ Check all environment variables are set
-- ✅ Verify Node.js version is 18+
-
-## Resources
-
-- [CDP React SDK Demo](https://demo.cdp.coinbase.com/)
 - [Coinbase Developer Platform](https://portal.cdp.coinbase.com/)
 - [Embedded Wallets Docs](https://docs.cdp.coinbase.com/wallet-sdk/docs)
 - [Base Documentation](https://docs.base.org/)
+- [Chainlink Functions](https://docs.chain.link/chainlink-functions)
+- [The Graph](https://thegraph.com/)
+- [Filecoin](https://filecoin.io/)
 
-## License
-
-MIT
