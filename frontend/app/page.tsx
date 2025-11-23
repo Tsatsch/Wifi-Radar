@@ -33,15 +33,27 @@ export default function Page() {
         return
       }
 
+      // Build detailed description with all test results
+      let description = `Average: ${result.speed} ${result.unit}\n`
+      if (result.methods) {
+        if (result.methods.cdn) {
+          description += `\n📦 CDN Test: ${result.methods.cdn.speed} Mbps`
+        }
+        if (result.methods.cloudflare) {
+          description += `\n☁️ Cloudflare: ${result.methods.cloudflare.speed} Mbps`
+        }
+      }
+
       setScanResult({
         ssid: "Detected Network",
         speed: result.speed,
         reward: 50,
+        methods: result.methods,
       })
 
       toast({
         title: "Scan Complete",
-        description: `Measured speed: ${result.speed} ${result.unit}`,
+        description,
       })
     } catch (error) {
       console.error(error)

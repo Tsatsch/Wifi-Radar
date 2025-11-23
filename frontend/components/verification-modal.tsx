@@ -1,6 +1,6 @@
 "use client"
 
-import { Check, Zap, X } from "lucide-react"
+import { Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
 import { SignInModal } from "@coinbase/cdp-react"
@@ -137,51 +137,70 @@ export function VerificationModal({ result, onClose }: VerificationModalProps) {
               </div>
             </div>
 
-            <h3 className="mb-2 font-space-grotesk text-2xl font-bold text-foreground">New Signal Detected</h3>
+            <h3 className="mb-6 font-space-grotesk text-2xl font-bold text-foreground">Speed Test Results</h3>
 
-            <div className="mb-6 flex items-center justify-center gap-2">
-              <Zap className="h-5 w-5 text-warning-amber" />
-              <span className="font-jetbrains text-3xl font-bold text-cyber-cyan">+{result.reward} VERI</span>
-            </div>
-
-            {/* Show measured average value and sample count */}
-            <div className="mb-4 text-sm text-foreground/70">
-              Measured: <span className="font-jetbrains font-bold text-cyber-cyan">{result.speed}</span> Mbps
-              {result.samples ? (
-                <span className="ml-2 text-xs text-foreground/60">(avg over {result.samples.length} samples)</span>
-              ) : null}
-            </div>
-
-            {isConnected ? (
-              <Button
-                onClick={handleSignAndPublish}
-                className="w-full rounded-full bg-cyber-cyan text-void hover:bg-cyber-cyan/90"
-              >
-                Sign & Publish
-              </Button>
-            ) : (
-              <div>
-                <p className="mb-4 text-sm text-foreground/60">Create a wallet to earn rewards</p>
-                <Button
-                  onClick={handleConnect}
-                  className="w-full rounded-full bg-cyber-cyan text-void hover:bg-cyber-cyan/90"
-                >
-                  Create Wallet
-                </Button>
+            {/* Network Information Card */}
+            <div className="mb-6 space-y-3 rounded-xl bg-void/30 border border-cyber-cyan/20 p-4">
+              {/* Average Speed - Prominent */}
+              <div className="text-center border-b border-foreground/10 pb-3">
+                <div className="text-xs text-foreground/60 mb-1">Measured Speed</div>
+                <div className="font-jetbrains text-4xl font-bold text-cyber-cyan">{result.speed}</div>
+                <div className="text-sm text-foreground/60">Mbps</div>
               </div>
-            )}
+
+              {/* Detailed Test Results */}
+              {result.methods && (
+                <div className="space-y-2 pt-2">
+                  <div className="text-xs font-semibold text-foreground/60 mb-2">Verification Methods</div>
+                  
+                  {result.methods.cdn && (
+                    <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">📦</span>
+                        <span className="text-sm text-foreground/80">CDN Test</span>
+                      </div>
+                      <span className="font-jetbrains font-semibold text-cyber-cyan">
+                        {result.methods.cdn.speed} Mbps
+                      </span>
+                    </div>
+                  )}
+                  
+                  {result.methods.cloudflare && (
+                    <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">☁️</span>
+                        <span className="text-sm text-foreground/80">Cloudflare</span>
+                      </div>
+                      <span className="font-jetbrains font-semibold text-cyber-cyan">
+                        {result.methods.cloudflare.speed} Mbps
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* Show network details */}
+                  <div className="flex items-center justify-between rounded-lg bg-void/40 px-3 py-2 mt-3 border-t border-foreground/10 pt-3">
+                    <span className="text-xs text-foreground/60">Network</span>
+                    <span className="text-xs font-semibold text-foreground/80">{result.ssid}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <Button
+              onClick={isConnected ? handleSignAndPublish : handleConnect}
+              className="w-full rounded-full bg-cyber-cyan text-void hover:bg-cyber-cyan/90 font-semibold"
+            >
+              Submit the Result
+            </Button>
           </div>
         )}
       </div>
 
       {/* Sign In Modal */}
-      {showSignIn && (
-        <SignInModal 
-          isOpen={showSignIn}
-          onClose={() => setShowSignIn(false)}
-          onSuccess={handleSignInSuccess}
-        />
-      )}
+      <SignInModal 
+        open={showSignIn}
+        onSuccess={handleSignInSuccess}
+      />
     </>
   )
 }
