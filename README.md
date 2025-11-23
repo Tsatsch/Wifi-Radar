@@ -1,4 +1,4 @@
-# Veri-Fi
+# WiFi-Radar
 
 Map-based WiFi signal verification powered by Web3. Discover, verify, and earn rewards for connectivity data.
 
@@ -62,7 +62,7 @@ Map-based WiFi signal verification powered by Web3. Discover, verify, and earn r
 ## User Experience
 
 ### First-Time User Flow
-1. **User lands on Veri-Fi** → Sees map with WiFi signals
+1. **User lands on Radar-Fi** → Sees map with WiFi signals
 2. **Runs speed test** → Verification modal appears
 3. **Clicks "Create Wallet"** → Chooses social login (Google, Apple, email)
 4. **Authenticates** → Smart wallet created automatically
