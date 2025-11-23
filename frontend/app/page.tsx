@@ -12,16 +12,23 @@ import { BottomControls } from "@/components/bottom-controls"
 import { SignalCard } from "@/components/signal-card"
 import { WiFiFormModal, type WiFiFormData } from "@/components/wifi-form-modal"
 import { SidebarLeaderboard } from "@/components/sidebar-leaderboard"
+import { useFilecoinUpload } from "@/hooks/use-filecoin-upload"
+import { UploadSuccessModal } from "@/components/upload-success-modal"
 export default function Page() {
   const [selectedSignal, setSelectedSignal] = useState<any>(null)
   const [isScanning, setIsScanning] = useState(false)
   const [showWiFiForm, setShowWiFiForm] = useState(false)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [measurementData, setMeasurementData] = useState<SpeedTestResult | null>(null)
   const { evmAddress } = useEvmAddress()
   const isWalletConnected = !!evmAddress
 
   const { toast } = useToast()
   const { coordinates } = useLocation()
+  const { uploadData, isUploading, statusMessage } = useFilecoinUpload()
+  
+  // Fallback to San Francisco center if coordinates not available (same as map default)
+  const location = coordinates || { lat: 37.7749, lng: -122.4194 }
 
   const handleAddNew = async () => {
     if (!isWalletConnected) {
@@ -69,17 +76,43 @@ export default function Page() {
   }
 
   const handleWiFiFormSubmit = async (data: WiFiFormData) => {
-    // TODO: Add your actual submission logic here (e.g., blockchain transaction)
-    console.log("WiFi form submitted:", data)
-    
-    toast({
-      title: "Measurement submitted!",
-      description: `${data.wifiName} - ${data.speed} Mbps`,
-    })
+    try {
+      // Prepare the data for upload (simulated)
+      const uploadPayload = {
+        ...data,
+        // Include measurement details if available
+        measurementDetails: measurementData,
+        // Add metadata
+        version: "1.0",
+        uploadedAt: new Date().toISOString(),
+      }
+      
+      console.log("WiFi form submitted:", uploadPayload)
+      
+      // Simulate upload and get the mock CID
+      const cid = await uploadData(uploadPayload)
+      
+      if (!cid) {
+        // Error handling is done in the hook
+        return
+      }
 
-    // Close the form
-    setShowWiFiForm(false)
-    setMeasurementData(null)
+      console.log("Data upload with CID:", cid)
+      
+      // Close the form first
+      setShowWiFiForm(false)
+      setMeasurementData(null)
+      
+      // Show success modal
+      setShowSuccessModal(true)
+    } catch (error) {
+      console.error("Error submitting measurement:", error)
+      toast({
+        title: "Submission failed",
+        description: "There was an error submitting your measurement",
+        variant: "destructive",
+      })
+    }
   }
 
   return (
@@ -117,16 +150,23 @@ export default function Page() {
         {showWiFiForm && measurementData && (
           <WiFiFormModal
             speed={measurementData.speed}
-            location={coordinates}
-            isLoading={isScanning}
+            location={location}
+            isLoading={isScanning || isUploading}
             measurementDetails={measurementData}
             walletAddress={evmAddress ?? null}
             onClose={() => {
-              setShowWiFiForm(false)
-              setMeasurementData(null)
+              if (!isUploading) {
+                setShowWiFiForm(false)
+                setMeasurementData(null)
+              }
             }}
             onSubmit={handleWiFiFormSubmit}
           />
+        )}
+
+        {/* Upload Success Modal */}
+        {showSuccessModal && (
+          <UploadSuccessModal onClose={() => setShowSuccessModal(false)} />
         )}
       </div>
     </GoogleMapsProvider>

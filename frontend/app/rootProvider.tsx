@@ -5,7 +5,7 @@ import { CDPReactProvider, type Config, type Theme } from "@coinbase/cdp-react";
 const config: Config = {
   projectId: process.env.NEXT_PUBLIC_CDP_PROJECT_ID || "",
   ethereum: {
-    createOnLogin: "smart", // Create smart wallet on login
+    createOnLogin: "eoa", // Use EOA (Externally Owned Account) instead of smart wallet
   },
   appName: "Veri-Fi",
   appLogoUrl: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/icon.svg`,
