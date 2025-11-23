@@ -168,7 +168,7 @@ export function MapView({ onMarkerClick }: { onMarkerClick: (signal: any) => voi
   const center = coordinates || defaultCenter
 
   return (
-    <div className="absolute inset-0 z-0 bg-void">
+    <div className="absolute inset-0 bg-void" style={{ zIndex: 0, isolation: 'isolate' }}>
       {/* Google Map Container */}
       <div className="absolute inset-0 h-full w-full">
         <Map

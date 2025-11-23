@@ -10,7 +10,8 @@ const config: Config = {
   appName: "Veri-Fi",
   appLogoUrl: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/icon.svg`,
   authMethods: ["email", "sms", "oauth:google", "oauth:apple"],
-  showCoinbaseFooter: true,
+  // We render our own wallet button in the top nav, so hide the default Coinbase footer widget
+  showCoinbaseFooter: false,
 };
 
 // Debug logging

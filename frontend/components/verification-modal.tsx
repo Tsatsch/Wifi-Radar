@@ -3,7 +3,7 @@
 import { Check, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useState, useEffect } from "react"
-import { SignInModal } from "@coinbase/cdp-react"
+import { useEvmAddress } from "@coinbase/cdp-hooks"
 import { useToast } from "@/components/ui/use-toast"
 
 interface VerificationModalProps {
@@ -15,8 +15,8 @@ export function VerificationModal({ result, onClose }: VerificationModalProps) {
   const { toast } = useToast()
   const [phase, setPhase] = useState<"speedometer" | "mint">("speedometer")
   const [speed, setSpeed] = useState(0)
-  const [showSignIn, setShowSignIn] = useState(false)
-  const [isConnected, setIsConnected] = useState(false)
+  const { evmAddress } = useEvmAddress()
+  const isConnected = !!evmAddress
 
   // Animate speed counter
   useEffect(() => {
@@ -36,20 +36,11 @@ export function VerificationModal({ result, onClose }: VerificationModalProps) {
     }
   }, [phase, result.speed])
 
-  const handleConnect = () => {
-    setShowSignIn(true)
-  }
-
-  const handleSignInSuccess = () => {
-    setShowSignIn(false)
-    setIsConnected(true)
-  }
-
   const handleSignAndPublish = async () => {
     if (!isConnected) {
       toast({
         title: "Wallet not connected",
-        description: "Please create a wallet first",
+        description: "Please connect your wallet using the button in the top-right first",
         variant: "destructive",
       })
       return
@@ -187,7 +178,7 @@ export function VerificationModal({ result, onClose }: VerificationModalProps) {
             </div>
 
             <Button
-              onClick={isConnected ? handleSignAndPublish : handleConnect}
+              onClick={handleSignAndPublish}
               className="w-full rounded-full bg-cyber-cyan text-void hover:bg-cyber-cyan/90 font-semibold"
             >
               Submit the Result
@@ -196,11 +187,6 @@ export function VerificationModal({ result, onClose }: VerificationModalProps) {
         )}
       </div>
 
-      {/* Sign In Modal */}
-      <SignInModal 
-        open={showSignIn}
-        onSuccess={handleSignInSuccess}
-      />
     </>
   )
 }

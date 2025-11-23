@@ -1,28 +1,41 @@
 "use client"
 
 import { useState } from "react"
+import { useEvmAddress } from "@coinbase/cdp-hooks"
 import { measureConnectionSpeed } from "@/lib/speed-test"
 import { useToast } from "@/hooks/use-toast"
+import { useLocation } from "@/hooks/use-location"
 import { GoogleMapsProvider } from "@/components/google-maps-provider"
 import { MapView } from "@/components/map-view"
 import { TopNav } from "@/components/top-nav"
 import { BottomControls } from "@/components/bottom-controls"
 import { SignalCard } from "@/components/signal-card"
-import { VerificationModal } from "@/components/verification-modal"
+import { WiFiFormModal, type WiFiFormData } from "@/components/wifi-form-modal"
 import { SidebarLeaderboard } from "@/components/sidebar-leaderboard"
-
 export default function Page() {
   const [selectedSignal, setSelectedSignal] = useState<any>(null)
   const [isScanning, setIsScanning] = useState(false)
-  const [scanResult, setScanResult] = useState<any>(null)
-  const [durationSeconds, setDurationSeconds] = useState<number>(5)
+  const [showWiFiForm, setShowWiFiForm] = useState(false)
+  const [measurementData, setMeasurementData] = useState<{ speed: number } | null>(null)
+  const { evmAddress } = useEvmAddress()
+  const isWalletConnected = !!evmAddress
 
   const { toast } = useToast()
+  const { coordinates } = useLocation()
 
-  const handleScan = async () => {
+  const handleAddNew = async () => {
+    if (!isWalletConnected) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your wallet to add WiFi measurements",
+        variant: "destructive",
+      })
+      return
+    }
+
     setIsScanning(true)
     try {
-      const result = await measureConnectionSpeed(durationSeconds)
+      const result = await measureConnectionSpeed(10)
       
       if ('error' in result) {
         toast({
@@ -33,28 +46,9 @@ export default function Page() {
         return
       }
 
-      // Build detailed description with all test results
-      let description = `Average: ${result.speed} ${result.unit}\n`
-      if (result.methods) {
-        if (result.methods.cdn) {
-          description += `\n📦 CDN Test: ${result.methods.cdn.speed} Mbps`
-        }
-        if (result.methods.cloudflare) {
-          description += `\n☁️ Cloudflare: ${result.methods.cloudflare.speed} Mbps`
-        }
-      }
-
-      setScanResult({
-        ssid: "Detected Network",
-        speed: result.speed,
-        reward: 50,
-        methods: result.methods,
-      })
-
-      toast({
-        title: "Scan Complete",
-        description,
-      })
+      // Store measurement data and show form
+      setMeasurementData({ speed: result.speed })
+      setShowWiFiForm(true)
     } catch (error) {
       console.error(error)
       toast({
@@ -67,55 +61,61 @@ export default function Page() {
     }
   }
 
+  const handleWiFiFormSubmit = async (data: WiFiFormData) => {
+    // TODO: Add your actual submission logic here (e.g., blockchain transaction)
+    console.log("WiFi form submitted:", data)
+    
+    toast({
+      title: "Measurement submitted!",
+      description: `${data.wifiName} - ${data.speed} Mbps`,
+    })
+
+    // Close the form
+    setShowWiFiForm(false)
+    setMeasurementData(null)
+  }
+
   return (
     <GoogleMapsProvider>
       <div className="relative h-screen w-full overflow-hidden">
-        {/* Map Canvas - Full Screen */}
+        {/* Map Canvas - Full Screen (Lower layer) */}
         <MapView onMarkerClick={setSelectedSignal} />
 
-        {/* HUD Layers */}
-        <TopNav />
+        {/* UI Layer - Guaranteed to be above map */}
+        <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 20 }}>
+          {/* HUD Layers */}
+          <div className="pointer-events-auto">
+            <TopNav />
+          </div>
 
-        <BottomControls onScan={handleScan} isScanning={isScanning} />
+          <div className="pointer-events-auto">
+            <BottomControls 
+              onAddNew={handleAddNew}
+              isScanning={isScanning}
+              isWalletConnected={isWalletConnected}
+            />
+          </div>
 
-        {/* Duration selector for speed test */}
-        <div className="absolute bottom-32 left-1/2 z-40 -translate-x-1/2 flex items-center gap-3 rounded-lg bg-popover/90 p-2 px-3 backdrop-blur-sm border border-border shadow-sm">
-          <label className="text-xs text-foreground/70 font-medium">Duration</label>
-
-          <div className="relative">
-            <select
-              value={durationSeconds}
-              onChange={(e) => setDurationSeconds(Number(e.target.value))}
-              className="appearance-none pr-8 pl-3 py-1 text-sm rounded-md bg-popover text-foreground outline-none border border-transparent hover:border-border transition"
-            >
-              <option className="bg-popover text-foreground" value={3}>3s</option>
-              <option className="bg-popover text-foreground" value={5}>5s</option>
-              <option className="bg-popover text-foreground" value={10}>10s</option>
-              <option className="bg-popover text-foreground" value={15}>15s</option>
-              <option className="bg-popover text-foreground" value={30}>30s</option>
-              <option className="bg-popover text-foreground" value={60}>60s</option>
-            </select>
-
-            {/* caret */}
-            <svg className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground/60" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M6 8l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+          {/* Desktop Sidebar */}
+          <div className="pointer-events-auto hidden lg:block">
+            <SidebarLeaderboard />
           </div>
         </div>
 
-        {/* Desktop Sidebar */}
-        <div className="hidden lg:block">
-          <SidebarLeaderboard />
-        </div>
-
+        {/* Modals - Separate high z-index layer */}
         {/* Signal Card Modal */}
         {selectedSignal && <SignalCard signal={selectedSignal} onClose={() => setSelectedSignal(null)} />}
 
-        {/* Verification Modal */}
-        {scanResult && (
-          <VerificationModal
-            result={scanResult}
-            onClose={() => setScanResult(null)}
+        {/* WiFi Form Modal */}
+        {showWiFiForm && measurementData && (
+          <WiFiFormModal
+            speed={measurementData.speed}
+            location={coordinates}
+            onClose={() => {
+              setShowWiFiForm(false)
+              setMeasurementData(null)
+            }}
+            onSubmit={handleWiFiFormSubmit}
           />
         )}
       </div>
