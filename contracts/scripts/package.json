@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "submit": "tsx submit-spots.ts",
-    "query": "tsx query-graphql.ts"
+    "query": "tsx query-graphql.ts",
+    "set-source": "tsx set-source-code.ts"
   },
   "dependencies": {
     "ethers": "^6.13.0"

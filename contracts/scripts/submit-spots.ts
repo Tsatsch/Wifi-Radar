@@ -17,12 +17,37 @@ const CONTRACT_ADDRESS = '0x15405de75e94ce71ef3a19cde0b0ae784319217d'; // Base S
 const RPC_URL = process.env.RPC_URL || 'https://sepolia.base.org';
 const PRIVATE_KEY = process.env.PRIVATE_KEY || '';
 
-// WiFi spots data with IPFS CIDs extracted from download links
-const wifiSpots = [
+/**
+ * WiFi Spot Configuration
+ * 
+ * To add a new spot, add an object to the wifiSpots array with:
+ * - name: Descriptive name (optional, for logging)
+ * - ipfsCid: The IPFS CID where the JSON data is stored
+ * - lat/lng: (Optional) Manual coordinates if IPFS fetch fails
+ *            Format: decimal degrees (e.g., 37.7749, -122.4194)
+ * 
+ * The script will:
+ * 1. Try to fetch JSON from IPFS using the CID
+ * 2. Extract lat/lng from the JSON (location.lat, location.lng)
+ * 3. If IPFS fetch fails, use manual lat/lng if provided
+ * 4. Convert to microdegrees and submit to contract
+ */
+interface WiFiSpotConfig {
+  name: string;
+  ipfsCid: string;
+  lat?: number;  // Manual override (decimal degrees)
+  lng?: number;       // Manual override (decimal degrees)
+  downloadUrl?: string; // Optional: for reference
+}
+
+const wifiSpots: WiFiSpotConfig[] = [
   {
     name: 'airport-free-wifi-2025-11-22T12-25-00Z',
     ipfsCid: 'bafybeie3k3hqe445fxunrbzzrtesx6vyfdqj6g6vjhpknvi5tge4ofji2y',
     downloadUrl: 'https://calibnet.pspsps.io/ipfs/bafybeie3k3hqe445fxunrbzzrtesx6vyfdqj6g6vjhpknvi5tge4ofji2y?filename=airport-free-wifi-2025-11-22T12-25-00Z.json.car',
+    // Optional: Add manual coordinates if IPFS fetch fails
+    // lat: 37.7749,
+    // lng: -122.4194,
   },
   {
     name: 'airport-free-wifi-2025-11-22T14-30-00Z',
@@ -59,6 +84,15 @@ const wifiSpots = [
     ipfsCid: 'bafybeihlr5ieepjy3jkz2j232ndxu4bvekwcozurkyqknbpmuz4rrsoxka',
     downloadUrl: 'https://calibnet.pspsps.io/ipfs/bafybeihlr5ieepjy3jkz2j232ndxu4bvekwcozurkyqknbpmuz4rrsoxka?filename=tokyo-station-free-2025-11-22T12-30-00Z.json.car',
   },
+  
+  // ADD MORE SPOTS HERE:
+  // {
+  //   name: 'my-new-wifi-spot',
+  //   ipfsCid: 'bafybei...',  // Your IPFS CID
+  //   // Optional: Manual coordinates if IPFS fetch fails
+  //   // lat: 40.7128,
+  //   // lng: -74.0060,
+  // },
 ];
 
 // ABI for submitSpot function
@@ -78,14 +112,117 @@ interface WiFiData {
 }
 
 /**
- * Fetch JSON data from IPFS
+ * Extract JSON from CAR file buffer
  */
-async function fetchIPFSData(cid: string): Promise<WiFiData | null> {
+function extractJsonFromCar(buffer: ArrayBuffer): WiFiData | null {
+  try {
+    const content = new TextDecoder('utf-8', { fatal: false }).decode(buffer);
+    
+    // Find JSON object start
+    let jsonStart = content.indexOf('{"location"');
+    if (jsonStart === -1) {
+      jsonStart = content.indexOf('{"wifiName"');
+    }
+    if (jsonStart === -1) {
+      jsonStart = content.indexOf('{');
+    }
+    
+    if (jsonStart === -1) {
+      return null;
+    }
+    
+    // Find matching closing brace
+    let braceCount = 0;
+    let jsonEnd = -1;
+    let inString = false;
+    let escapeNext = false;
+    
+    for (let i = jsonStart; i < content.length; i++) {
+      const char = content[i];
+      
+      if (escapeNext) {
+        escapeNext = false;
+        continue;
+      }
+      
+      if (char === '\\') {
+        escapeNext = true;
+        continue;
+      }
+      
+      if (char === '"') {
+        inString = !inString;
+        continue;
+      }
+      
+      if (!inString) {
+        if (char === '{') {
+          braceCount++;
+        } else if (char === '}') {
+          braceCount--;
+          if (braceCount === 0) {
+            jsonEnd = i + 1;
+            break;
+          }
+        }
+      }
+    }
+    
+    if (jsonEnd === -1) {
+      return null;
+    }
+    
+    const jsonString = content.substring(jsonStart, jsonEnd);
+    return JSON.parse(jsonString) as WiFiData;
+  } catch (error) {
+    return null;
+  }
+}
+
+/**
+ * Fetch JSON data from IPFS
+ * Tries multiple gateways and handles both JSON and CAR files
+ */
+async function fetchIPFSData(cid: string, downloadUrl?: string): Promise<WiFiData | null> {
+  // Try calibnet gateway first (since that's where the CAR files are)
+  if (downloadUrl) {
+    try {
+      console.log(`Trying calibnet gateway: ${downloadUrl}...`);
+      const response = await fetch(downloadUrl, {
+        headers: { 
+          'Accept': 'application/json, application/octet-stream, */*'
+        },
+        signal: AbortSignal.timeout(15000),
+      });
+
+      if (response.ok) {
+        const contentType = response.headers.get('content-type') || '';
+        
+        // If it's JSON, parse directly
+        if (contentType.includes('application/json')) {
+          const data = await response.json();
+          return data as WiFiData;
+        }
+        
+        // If it's a CAR file or binary, extract JSON
+        const arrayBuffer = await response.arrayBuffer();
+        const extracted = extractJsonFromCar(arrayBuffer);
+        if (extracted) {
+          console.log(`   ✅ Extracted JSON from CAR file`);
+          return extracted;
+        }
+      }
+    } catch (error) {
+      console.warn(`   ⚠️  Calibnet gateway failed:`, error instanceof Error ? error.message : 'Unknown error');
+    }
+  }
+
+  // Try standard IPFS gateways
   const gateways = [
     'https://ipfs.io/ipfs/',
     'https://dweb.link/ipfs/',
-    'https://cloudflare-ipfs.com/ipfs/',
     'https://gateway.pinata.cloud/ipfs/',
+    'https://trustless-gateway.link/ipfs/',
   ];
 
   for (const gateway of gateways) {
@@ -93,16 +230,38 @@ async function fetchIPFSData(cid: string): Promise<WiFiData | null> {
       const url = `${gateway}${cid}`;
       console.log(`Trying ${url}...`);
       const response = await fetch(url, {
-        headers: { Accept: 'application/json' },
+        headers: { 
+          'Accept': 'application/json, application/octet-stream, */*'
+        },
         signal: AbortSignal.timeout(10000),
       });
 
       if (response.ok) {
-        const data = await response.json();
-        return data as WiFiData;
+        const contentType = response.headers.get('content-type') || '';
+        const text = await response.text();
+        
+        // Check if it's HTML (error page)
+        if (text.trim().startsWith('<!DOCTYPE') || text.trim().startsWith('<!doctype')) {
+          console.warn(`   ⚠️  Gateway returned HTML (likely error page)`);
+          continue;
+        }
+        
+        // Try parsing as JSON first
+        try {
+          const data = JSON.parse(text);
+          return data as WiFiData;
+        } catch {
+          // If not JSON, try extracting from CAR file
+          const arrayBuffer = await response.arrayBuffer();
+          const extracted = extractJsonFromCar(arrayBuffer);
+          if (extracted) {
+            console.log(`   ✅ Extracted JSON from CAR file`);
+            return extracted;
+          }
+        }
       }
     } catch (error) {
-      console.warn(`Failed to fetch from ${gateway}:`, error);
+      console.warn(`   ⚠️  Failed:`, error instanceof Error ? error.message : 'Unknown error');
       continue;
     }
   }
@@ -159,14 +318,27 @@ async function submitSpots() {
       console.log(`   IPFS CID: ${spot.ipfsCid}`);
 
       // Fetch IPFS data to get lat/lng
-      const ipfsData = await fetchIPFSData(spot.ipfsCid);
+      let lat: number;
+      let lng: number;
       
-      if (!ipfsData || !ipfsData.location) {
-        throw new Error(`Failed to fetch IPFS data or missing location for ${spot.name}`);
+      const ipfsData = await fetchIPFSData(spot.ipfsCid, spot.downloadUrl);
+      
+      if (ipfsData && ipfsData.location) {
+        // Use coordinates from IPFS JSON
+        lat = ipfsData.location.lat;
+        lng = ipfsData.location.lng;
+        console.log(`   ✅ Fetched from IPFS`);
+      } else if (spot.lat !== undefined && spot.lng !== undefined) {
+        // Use manual coordinates if provided
+        lat = spot.lat;
+        lng = spot.lng;
+        console.log(`   ⚠️  IPFS fetch failed, using manual coordinates`);
+      } else {
+        throw new Error(
+          `Failed to fetch IPFS data and no manual coordinates provided for ${spot.name}. ` +
+          `Either ensure the IPFS CID is accessible, or add manual lat/lng to the spot config.`
+        );
       }
-
-      const lat = ipfsData.location.lat;
-      const lng = ipfsData.location.lng;
       const latMicro = toMicrodegrees(lat);
       const lngMicro = toMicrodegrees(lng);
 
@@ -193,6 +365,16 @@ async function submitSpots() {
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       console.error(`   ❌ Error: ${errorMsg}`);
+      
+      // Provide helpful error messages for common issues
+      if (errorMsg.includes('0x71e83137') || errorMsg.includes('execution reverted')) {
+        console.error(`   💡 This error usually means:`);
+        console.error(`      1. Chainlink Functions subscription needs LINK tokens`);
+        console.error(`      2. Contract must be added as consumer to subscription`);
+        console.error(`      3. Check subscription ID matches contract configuration`);
+        console.error(`      See: https://docs.chain.link/chainlink-functions`);
+      }
+      
       results.push({ name: spot.name, success: false, error: errorMsg });
     }
   }
@@ -215,9 +397,19 @@ async function submitSpots() {
     });
   }
 
-  console.log('\n💡 Note: Spots will be verified by Chainlink Functions.');
-  console.log('   Check the contract events for verification status.');
-  console.log('   Once verified, they will appear in The Graph subgraph.');
+  console.log('\n💡 Notes:');
+  console.log('   - Spots will be verified by Chainlink Functions (takes 30-60 seconds)');
+  console.log('   - Check the contract events for verification status');
+  console.log('   - Once verified, they will appear in The Graph subgraph');
+  
+  if (failed.length > 0) {
+    console.log('\n⚠️  Troubleshooting failed submissions:');
+    console.log('   1. Ensure Chainlink Functions subscription has LINK tokens');
+    console.log('   2. Verify contract is added as consumer to subscription');
+    console.log('   3. Check subscription ID in contract matches your subscription');
+    console.log('   4. Verify source code is set (it appears to be set already)');
+    console.log('   See: https://docs.chain.link/chainlink-functions');
+  }
 }
 
 // Run the script
