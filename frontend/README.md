@@ -56,4 +56,64 @@ pnpm dev
 - Reuse existing primitives in `components/ui` before creating new ones; follow existing patterns when adding new components.
 - Use **TypeScript** everywhere and keep props/return types explicit when it improves clarity.
 
+### Backend API Integration
+
+The frontend integrates with the backend API to fetch Wi-Fi statistics computed using Chainlink CRE workflows.
+
+#### Environment Variables
+
+Set the backend API URL in `.env.local`:
+
+```bash
+NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
+# or for production:
+NEXT_PUBLIC_API_BASE_URL=http://35.222.217.64
+```
+
+#### Using Statistics Hook
+
+The `useStatistics` hook fetches Wi-Fi statistics from the backend:
+
+```tsx
+import { useStatistics } from "@/hooks/use-statistics"
+
+function MyComponent() {
+  const { statistics, loading, error, refresh } = useStatistics()
+
+  if (loading) return <div>Loading...</div>
+  if (error) return <div>Error: {error}</div>
+
+  return (
+    <div>
+      {statistics.map((stat) => (
+        <div key={stat.wifiName}>
+          <h3>{stat.wifiName}</h3>
+          <p>Average Speed: {stat.averageSpeed} Mbps</p>
+          <p>Measurements: {stat.totalMeasurements}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+#### Statistics Component
+
+A ready-to-use `StatisticsPanel` component is available:
+
+```tsx
+import { StatisticsPanel } from "@/components/statistics-panel"
+
+function MyPage() {
+  return <StatisticsPanel />
+}
+```
+
+#### API Endpoints
+
+- `GET /api/statistics` – Returns Wi-Fi statistics aggregated by network name
+- `GET /health` – Backend health check
+
+The statistics are computed from data points stored on Filecoin and processed using Chainlink CRE workflows for decentralized consensus.
+
 
