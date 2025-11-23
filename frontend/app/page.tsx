@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useMemo } from "react"
 import { useEvmAddress } from "@coinbase/cdp-hooks"
 import { measureConnectionSpeed } from "@/lib/speed-test"
 import { useToast } from "@/hooks/use-toast"
@@ -14,6 +14,7 @@ import { WiFiFormModal, type WiFiFormData } from "@/components/wifi-form-modal"
 import { SidebarLeaderboard } from "@/components/sidebar-leaderboard"
 import { FilecoinPinProvider } from "@/context/filecoin-pin-provider"
 import { useFilecoinUpload } from "@/hooks/use-filecoin-upload"
+import { useWifiSpots } from "@/hooks/use-wifi-spots"
 import type { Measurement } from "@/types/measurement"
 
 function PageContent() {
@@ -21,7 +22,7 @@ function PageContent() {
   const [isScanning, setIsScanning] = useState(false)
   const [showWiFiForm, setShowWiFiForm] = useState(false)
   const [measurementData, setMeasurementData] = useState<{ speed: number } | null>(null)
-  const [measurements, setMeasurements] = useState<Measurement[]>([])
+  const [localMeasurements, setLocalMeasurements] = useState<Measurement[]>([])
   const { evmAddress } = useEvmAddress()
   const isWalletConnected = !!evmAddress
 
@@ -29,6 +30,28 @@ function PageContent() {
   const { coordinates } = useLocation()
   const { uploadState, uploadFile } = useFilecoinUpload()
   const hasShownUploadToast = useRef(false)
+
+  // Load WiFi spots from The Graph and IPFS
+  const { 
+    measurements: graphMeasurements, 
+    loading: loadingSpots, 
+    error: graphError,
+    loadSpots,
+    refresh: refreshSpots 
+  } = useWifiSpots()
+
+  // Load spots on mount
+  useEffect(() => {
+    loadSpots()
+  }, [loadSpots])
+
+  // Show error toast if GraphQL fails
+  useEffect(() => {
+    if (graphError) {
+      console.warn('GraphQL error (non-blocking):', graphError)
+      // Don't show error toast - it's non-blocking, user can still use the app
+    }
+  }, [graphError])
 
   // Show toast when upload starts
   useEffect(() => {
@@ -121,8 +144,8 @@ function PageContent() {
       walletAddress: evmAddress,
     }
 
-    // Immediately add to map
-    setMeasurements((prev) => [...prev, measurement])
+    // Immediately add to map (local state for user's own measurements)
+    setLocalMeasurements((prev) => [...prev, measurement])
     
     toast({
       title: "Measurement added!",
@@ -154,17 +177,51 @@ function PageContent() {
       speed: data.speed.toString(),
       location: `${coordinates.lat},${coordinates.lng}`,
       timestamp: new Date().toISOString(),
-    }).catch((error) => {
-      // Silently log errors without showing to user
-      console.error('Filecoin upload failed:', error)
     })
+      .then((cid) => {
+        // After successful upload, refresh GraphQL data to show new spot
+        // Note: This will only work after the spot is verified and indexed
+        console.log('File uploaded to IPFS:', cid)
+        // Optionally refresh spots after a delay to allow indexing
+        // setTimeout(() => refreshSpots(), 30000) // Refresh after 30s
+      })
+      .catch((error) => {
+        // Silently log errors without showing to user
+        console.error('Filecoin upload failed:', error)
+      })
   }
+
+  // Merge and deduplicate measurements
+  // Local measurements are added first, then GraphQL data
+  const allMeasurements = useMemo(() => {
+    const combined = [...localMeasurements, ...graphMeasurements]
+    const seen = new Set<string>()
+    return combined.filter((m) => {
+      // Use a combination of lat/lng/ssid as unique key (within small tolerance)
+      const key = `${Math.round(m.lat * 1000)}_${Math.round(m.lng * 1000)}_${m.ssid}`
+      if (seen.has(key)) {
+        return false // Skip duplicates
+      }
+      seen.add(key)
+      return true
+    })
+  }, [graphMeasurements, localMeasurements])
 
   return (
     <GoogleMapsProvider>
       <div className="relative h-screen w-full overflow-hidden touch-pan-y">
         {/* Map Canvas - Full Screen (Lower layer) */}
-        <MapView onMarkerClick={setSelectedSignal} measurements={measurements} />
+        <MapView 
+          onMarkerClick={setSelectedSignal} 
+          measurements={allMeasurements}
+        />
+
+        {/* Loading indicator for GraphQL data (subtle, non-blocking) */}
+        {loadingSpots && graphMeasurements.length === 0 && (
+          <div className="absolute top-20 left-4 z-30 rounded-lg bg-black/80 px-3 py-2 text-sm text-white">
+            Loading WiFi spots...
+          </div>
+        )}
 
         {/* UI Layer - Guaranteed to be above map */}
         <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 20 }}>
