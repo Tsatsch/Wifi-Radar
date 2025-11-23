@@ -162,7 +162,7 @@ function PageContent() {
 
   return (
     <GoogleMapsProvider>
-      <div className="relative h-screen w-full overflow-hidden">
+      <div className="relative h-screen w-full overflow-hidden touch-pan-y">
         {/* Map Canvas - Full Screen (Lower layer) */}
         <MapView onMarkerClick={setSelectedSignal} measurements={measurements} />
 
@@ -197,19 +197,15 @@ function PageContent() {
           <WiFiFormModal
             speed={measurementData.speed}
             location={coordinates}
+            walletAddress={evmAddress || null}
             onClose={() => {
-              if (!isUploading) {
+              if (!uploadState.isUploading) {
                 setShowWiFiForm(false)
                 setMeasurementData(null)
               }
             }}
             onSubmit={handleWiFiFormSubmit}
           />
-        )}
-
-        {/* Upload Success Modal */}
-        {showSuccessModal && (
-          <UploadSuccessModal onClose={() => setShowSuccessModal(false)} />
         )}
       </div>
 

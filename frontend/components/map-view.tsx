@@ -64,11 +64,11 @@ function WiFiMarker({
       onMouseLeave={() => onHover(null)}
     >
       {/* Custom marker content */}
-      <div className="relative cursor-pointer">
-        {/* Outer pulse ring on hover */}
+      <div className="relative cursor-pointer touch-manipulation">
+        {/* Outer pulse ring on hover - Only on desktop */}
         {isHovered && (
           <div
-            className="absolute inset-0 animate-ping rounded-full opacity-75"
+            className="hidden md:block absolute inset-0 animate-ping rounded-full opacity-75"
             style={{
               width: "40px",
               height: "40px",
@@ -117,10 +117,10 @@ function WiFiMarker({
           }}
         />
 
-        {/* Tooltip on hover */}
+        {/* Tooltip on hover - Hidden on mobile, shown on desktop */}
         {isHovered && (
           <div 
-            className="absolute left-8 top-0 z-50 min-w-[200px] animate-fade-in rounded-lg p-3 text-sm shadow-2xl"
+            className="hidden md:block absolute left-8 top-0 z-50 min-w-[200px] animate-fade-in rounded-lg p-3 text-sm shadow-2xl"
             style={{
               backgroundColor: "rgba(17, 24, 39, 0.95)",
               border: "1px solid rgba(34, 211, 238, 0.3)",

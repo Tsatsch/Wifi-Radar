@@ -84,29 +84,29 @@ export function WiFiFormModal({
   return (
     <>
       {/* Backdrop */}
-      <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm" />
+      <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
-        <div className="w-[90%] max-w-md">
-          <div className="relative rounded-2xl bg-glass p-8 backdrop-blur-xl border border-cyber-cyan/20">
+      <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center">
+        <div className="w-full max-w-md md:w-[90%] md:max-h-[90vh] overflow-y-auto">
+          <div className="relative rounded-t-3xl md:rounded-2xl bg-glass p-6 md:p-8 backdrop-blur-xl border border-cyber-cyan/20 md:border-t md:border-l md:border-r md:border-b">
           {/* Close button */}
           <button
             onClick={onClose}
             aria-label="Close"
-            className="absolute right-4 top-4 rounded-full p-1 text-foreground/60 hover:text-foreground transition-colors"
+            className="absolute right-4 top-4 rounded-full p-2 text-foreground/60 hover:text-foreground active:text-foreground transition-colors touch-manipulation min-w-[44px] min-h-[44px] flex items-center justify-center"
           >
             <X className="h-5 w-5" />
           </button>
 
-          <h3 className="mb-6 font-space-grotesk text-2xl font-bold text-foreground">
+          <h3 className="mb-4 md:mb-6 font-space-grotesk text-xl md:text-2xl font-bold text-foreground pr-8">
             Submit WiFi Measurement
           </h3>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
             {/* WiFi Name */}
             <div className="space-y-2">
-              <Label htmlFor="wifi-name" className="text-foreground/80">
+              <Label htmlFor="wifi-name" className="text-sm md:text-base text-foreground/80">
                 WiFi Network Name
               </Label>
               <Input
@@ -116,17 +116,17 @@ export function WiFiFormModal({
                 value={wifiName}
                 onChange={(e) => setWifiName(e.target.value)}
                 disabled={isLoading}
-                className="bg-void/40 border-foreground/20 text-foreground placeholder:text-foreground/40 disabled:opacity-50"
+                className="h-11 md:h-10 bg-void/40 border-foreground/20 text-foreground placeholder:text-foreground/40 disabled:opacity-50 text-base"
               />
             </div>
 
             {/* Speed (Read-only) */}
             <div className="space-y-2">
-              <Label htmlFor="speed" className="text-foreground/80">
+              <Label htmlFor="speed" className="text-sm md:text-base text-foreground/80">
                 Measured Speed
               </Label>
               <div className="space-y-1">
-                <div className="flex items-baseline gap-2 rounded-lg bg-void/40 border border-foreground/20 px-4 py-3">
+                <div className="flex items-baseline gap-2 rounded-lg bg-void/40 border border-foreground/20 px-4 py-3 min-h-[52px]">
                   {isLoading ? (
                     <div className="flex items-center gap-2">
                       <div className="h-4 w-4 animate-spin rounded-full border-2 border-cyber-cyan border-t-transparent" />
@@ -134,7 +134,7 @@ export function WiFiFormModal({
                     </div>
                   ) : (
                     <>
-                      <span className="font-jetbrains text-3xl font-bold text-cyber-cyan">
+                      <span className="font-jetbrains text-2xl md:text-3xl font-bold text-cyber-cyan">
                         {speed}
                       </span>
                       <span className="text-sm text-foreground/60">Mbps</span>
@@ -164,22 +164,25 @@ export function WiFiFormModal({
 
             {/* Location (Read-only) */}
             <div className="space-y-2">
-              <Label className="text-foreground/80">Location</Label>
-              <div className="rounded-lg bg-void/40 border border-foreground/20 px-4 py-3">
+              <Label className="text-sm md:text-base text-foreground/80">Location</Label>
+              <div className="rounded-lg bg-void/40 border border-foreground/20 px-4 py-3 min-h-[52px] flex items-center">
                 {location ? (
-                  <div className="font-jetbrains text-sm text-foreground/80">
+                  <div className="font-jetbrains text-xs md:text-sm text-foreground/80 w-full">
                     <div>Lat: {location.lat.toFixed(6)}</div>
                     <div>Lng: {location.lng.toFixed(6)}</div>
                   </div>
                 ) : (
-                  <div className="text-sm text-foreground/40">Location unavailable</div>
+                  <div className="text-sm text-foreground/60 w-full">
+                    <div>Location unavailable</div>
+                    <div className="text-xs text-foreground/40 mt-1">Please enable location permissions</div>
+                  </div>
                 )}
               </div>
             </div>
 
             {/* Satisfaction Rating */}
             <div className="space-y-3">
-              <Label className="text-foreground/80">How fast is Wifi?</Label>
+              <Label className="text-sm md:text-base text-foreground/80">How fast is Wifi?</Label>
               <div className="flex justify-center py-2">
                 <StarRating 
                   value={satisfaction} 
@@ -187,7 +190,7 @@ export function WiFiFormModal({
                 />
               </div>
               {satisfaction > 0 && (
-                <p className="text-center text-sm text-foreground/60">
+                <p className="text-center text-xs md:text-sm text-foreground/60">
                   {satisfaction === 1 && "Very Poor"}
                   {satisfaction === 2 && "Poor"}
                   {satisfaction === 3 && "Average"}
@@ -201,7 +204,7 @@ export function WiFiFormModal({
             <Button
               type="submit"
               disabled={isSubmitting || isLoading}
-              className="w-full rounded-full bg-cyber-cyan text-void hover:bg-cyber-cyan/90 font-semibold disabled:opacity-50"
+              className="w-full h-12 md:h-11 rounded-full bg-cyber-cyan text-void hover:bg-cyber-cyan/90 active:bg-cyber-cyan/80 font-semibold disabled:opacity-50 touch-manipulation text-base"
             >
               {isSubmitting ? "Submitting..." : isLoading ? "Measuring Speed..." : "Submit Measurement"}
             </Button>

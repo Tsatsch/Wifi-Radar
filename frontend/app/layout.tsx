@@ -14,6 +14,18 @@ const _jetbrainsMono = JetBrains_Mono({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Veri-Fi | Trustless Connectivity Verification",
   description: "Map-based WiFi signal verification powered by Web3. Discover, verify, and earn rewards for connectivity data.",
+  viewport: {
+    width: "device-width",
+    initialScale: 1,
+    maximumScale: 5,
+    userScalable: true,
+    viewportFit: "cover",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Veri-Fi",
+  },
   icons: {
     icon: [
       {
