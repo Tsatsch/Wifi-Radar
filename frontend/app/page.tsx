@@ -11,6 +11,7 @@ import { TopNav } from "@/components/top-nav"
 import { BottomControls } from "@/components/bottom-controls"
 import { SignalCard } from "@/components/signal-card"
 import { WiFiFormModal, type WiFiFormData } from "@/components/wifi-form-modal"
+import { LocationInfoModal } from "@/components/location-info-modal"
 import { SidebarLeaderboard } from "@/components/sidebar-leaderboard"
 import { FilecoinPinProvider } from "@/context/filecoin-pin-provider"
 import { useFilecoinUpload } from "@/hooks/use-filecoin-upload"
@@ -20,6 +21,8 @@ function PageContent() {
   const [selectedSignal, setSelectedSignal] = useState<any>(null)
   const [isScanning, setIsScanning] = useState(false)
   const [showWiFiForm, setShowWiFiForm] = useState(false)
+  const [showLocationInfo, setShowLocationInfo] = useState(false)
+  const [clickedLocation, setClickedLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [measurementData, setMeasurementData] = useState<{ speed: number } | null>(null)
   const [measurements, setMeasurements] = useState<Measurement[]>([])
   const { evmAddress } = useEvmAddress()
@@ -83,8 +86,63 @@ function PageContent() {
     }
   }
 
+  const handleMapClick = (location: { lat: number; lng: number }) => {
+    setClickedLocation(location)
+    setShowLocationInfo(true)
+  }
+
+  const handleAddMeasurementFromLocation = async () => {
+    if (!isWalletConnected) {
+      toast({
+        title: "Wallet not connected",
+        description: "Please connect your wallet to add measurements",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (!clickedLocation) {
+      return
+    }
+
+    // Run speed test for the clicked location
+    setIsScanning(true)
+    try {
+      const result = await measureConnectionSpeed(10)
+      
+      if ('error' in result) {
+        toast({
+          title: "Speed test failed",
+          description: result.error as string,
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Store measurement data and show form
+      setMeasurementData({ speed: result.speed })
+      setShowWiFiForm(true)
+      setShowLocationInfo(false) // Close location info modal
+    } catch (error) {
+      console.error(error)
+      toast({
+        title: "Error",
+        description: "Failed to run speed test",
+        variant: "destructive",
+      })
+    } finally {
+      setIsScanning(false)
+    }
+  }
+
   const handleWiFiFormSubmit = async (data: WiFiFormData) => {
-    if (!coordinates) {
+    console.log("📍 WiFi Form Submit - Location data:", {
+      formLocation: data.location,
+      clickedLocation,
+      coordinates,
+    })
+
+    if (!data.location) {
       toast({
         title: "Location required",
         description: "Location is required to submit measurement",
@@ -111,8 +169,8 @@ function PageContent() {
     // Create measurement object
     const measurement: Measurement = {
       id: `measurement-${Date.now()}`,
-      lat: coordinates.lat,
-      lng: coordinates.lng,
+      lat: data.location.lat,
+      lng: data.location.lng,
       ssid: data.wifiName,
       speed: data.speed,
       strength,
@@ -120,6 +178,12 @@ function PageContent() {
       timestamp: new Date().toISOString(),
       walletAddress: evmAddress,
     }
+
+    console.log("📍 Creating measurement at:", {
+      lat: measurement.lat,
+      lng: measurement.lng,
+      ssid: measurement.ssid,
+    })
 
     // Immediately add to map
     setMeasurements((prev) => [...prev, measurement])
@@ -129,15 +193,16 @@ function PageContent() {
       description: `${data.wifiName} - ${data.speed} Mbps`,
     })
 
-    // Close the form
+    // Close the form and reset states
     setShowWiFiForm(false)
     setMeasurementData(null)
+    setClickedLocation(null) // Reset clicked location
 
     // Create JSON file with measurement data
     const measurementJson = {
       location: {
-        lat: coordinates.lat,
-        lng: coordinates.lng,
+        lat: data.location.lat,
+        lng: data.location.lng,
       },
       speed: data.speed,
       time: new Date().toISOString(),
@@ -152,7 +217,7 @@ function PageContent() {
     uploadFile(jsonFile, {
       wifiName: data.wifiName,
       speed: data.speed.toString(),
-      location: `${coordinates.lat},${coordinates.lng}`,
+      location: `${data.location.lat},${data.location.lng}`,
       timestamp: new Date().toISOString(),
     }).catch((error) => {
       // Silently log errors without showing to user
@@ -164,7 +229,11 @@ function PageContent() {
     <GoogleMapsProvider>
       <div className="relative h-screen w-full overflow-hidden touch-pan-y">
         {/* Map Canvas - Full Screen (Lower layer) */}
-        <MapView onMarkerClick={setSelectedSignal} measurements={measurements} />
+        <MapView 
+          onMarkerClick={setSelectedSignal} 
+          onMapClick={handleMapClick}
+          measurements={measurements} 
+        />
 
         {/* UI Layer - Guaranteed to be above map */}
         <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 20 }}>
@@ -197,14 +266,30 @@ function PageContent() {
           <WiFiFormModal
             speed={measurementData.speed}
             location={coordinates}
+            customLocation={clickedLocation}
             walletAddress={evmAddress || null}
             onClose={() => {
               if (!uploadState.isUploading) {
                 setShowWiFiForm(false)
                 setMeasurementData(null)
+                setClickedLocation(null)
               }
             }}
             onSubmit={handleWiFiFormSubmit}
+          />
+        )}
+
+        {/* Location Info Modal */}
+        {showLocationInfo && clickedLocation && (
+          <LocationInfoModal
+            location={clickedLocation}
+            onClose={() => {
+              setShowLocationInfo(false)
+              setClickedLocation(null)
+            }}
+            onAddMeasurement={handleAddMeasurementFromLocation}
+            isWalletConnected={isWalletConnected}
+            isScanning={isScanning}
           />
         )}
       </div>

@@ -12,6 +12,7 @@ import type { SpeedTestResult } from "@/lib/speed-test"
 interface WiFiFormModalProps {
   speed: number
   location: { lat: number; lng: number } | null
+  customLocation?: { lat: number; lng: number } | null
   isLoading?: boolean
   walletAddress: string | null
   measurementDetails?: Pick<SpeedTestResult, "method" | "methods">
@@ -31,6 +32,7 @@ export interface WiFiFormData {
 export function WiFiFormModal({
   speed,
   location,
+  customLocation,
   isLoading = false,
   walletAddress,
   measurementDetails,
@@ -41,6 +43,15 @@ export function WiFiFormModal({
   const [satisfaction, setSatisfaction] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
+
+  // Use custom location (clicked on map) if provided, otherwise use user's GPS location
+  const actualLocation = customLocation || location
+
+  console.log("📍 WiFi Form Modal - Locations:", {
+    customLocation,
+    location,
+    actualLocation,
+  })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -68,7 +79,7 @@ export function WiFiFormModal({
       const formData = {
         wifiName,
         speed,
-        location,
+        location: actualLocation,
         satisfaction,
         walletAddress,
         // ISO 8601 string in UTC (Date.toISOString() is always UTC)

@@ -161,11 +161,13 @@ function MapRecenter({ lat, lng }: { lat: number; lng: number }) {
 
 export interface MapViewProps {
   onMarkerClick: (signal: any) => void
+  onMapClick?: (location: { lat: number; lng: number }) => void
   measurements?: Measurement[]
 }
 
 export function MapView({ 
   onMarkerClick,
+  onMapClick,
   measurements = [],
 }: MapViewProps) {
   const [hoveredId, setHoveredId] = useState<string | number | null>(null)
@@ -200,8 +202,17 @@ export function MapView({
           mapId={process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID}
           disableDefaultUI={true}
           gestureHandling="greedy"
+          clickableIcons={false}
           style={{ width: "100%", height: "100%" }}
-          onTilesLoad={() => {
+          onClick={(event) => {
+            if (onMapClick && event.detail.latLng) {
+              onMapClick({
+                lat: event.detail.latLng.lat,
+                lng: event.detail.latLng.lng,
+              })
+            }
+          }}
+          onTilesLoaded={() => {
             console.log("✅ Google Map tiles loaded successfully!")
             setMapLoaded(true)
           }}
