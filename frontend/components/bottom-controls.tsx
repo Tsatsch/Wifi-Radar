@@ -13,6 +13,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { useCdpModalState } from "@/hooks/use-cdp-modal-state"
+import { cn } from "@/lib/utils"
 
 type SignalFilter = 'all' | 'strong' | 'weak' | 'dead'
 
@@ -40,8 +42,15 @@ export function BottomControls({
   onSignalFilterChange,
   onRecenter,
 }: BottomControlsProps) {
+  const isModalOpen = useCdpModalState()
+
   return (
-    <div className="absolute bottom-20 left-0 right-0 z-40 flex justify-between items-center px-4 pb-safe md:bottom-8 md:pb-0 md:px-6">
+    <div 
+      className={cn(
+        "absolute bottom-20 left-0 right-0 z-40 flex justify-between items-center px-4 pb-safe md:bottom-8 md:pb-0 md:px-6 transition-opacity duration-300",
+        isModalOpen && "opacity-0 pointer-events-none"
+      )}
+    >
       {/* Left side - Filter button */}
       <Popover>
         <PopoverTrigger asChild>
