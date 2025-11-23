@@ -7,8 +7,8 @@ const config: Config = {
   ethereum: {
     createOnLogin: "eoa", // Use EOA (Externally Owned Account) instead of smart wallet
   },
-  appName: "Veri-Fi",
-  appLogoUrl: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/icon.svg`,
+  appName: "Wifi-Radar",
+  appLogoUrl: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/logo_verifi.png`,
   authMethods: ["email", "sms", "oauth:google", "oauth:apple"],
   // We render our own wallet button in the top nav, so hide the default Coinbase footer widget
   showCoinbaseFooter: false,
@@ -27,7 +27,7 @@ if (typeof window !== 'undefined') {
 const theme: Partial<Theme> = {
   "colors-bg-default": "#0a0b0d",
   "colors-bg-alternate": "#1a1b1e",
-  "colors-bg-primary": "#24d3ef", // Cyan for Veri-Fi branding
+  "colors-bg-primary": "#24d3ef", // Cyan for Wifi-Radar branding
   "colors-bg-secondary": "#1a1b1e",
   "colors-fg-default": "#ffffff",
   "colors-fg-muted": "#8a919e",

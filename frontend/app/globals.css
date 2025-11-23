@@ -4,7 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  /* Veri-Fi custom colors for cyber-physical aesthetic */
+  /* Wifi-Radar custom colors for cyber-physical aesthetic */
   --void: #09090b;
   --cyber-cyan: #22d3ee;
   --signal-green: #34d399;
@@ -12,7 +12,7 @@
   --critical-red: #f87171;
   --glass: rgba(0, 0, 0, 0.4);
 
-  /* shadcn/ui default colors - overridden for Veri-Fi dark theme */
+  /* shadcn/ui default colors - overridden for Wifi-Radar dark theme */
   --background: #09090b;
   --foreground: #fafafa;
   --card: rgba(0, 0, 0, 0.6);
@@ -89,7 +89,7 @@
   --font-space-grotesk: "Space Grotesk", "Geist", "Geist Fallback";
   --font-jetbrains: "JetBrains Mono", "Geist Mono", "Geist Mono Fallback";
 
-  /* Veri-Fi custom color tokens */
+  /* Wifi-Radar custom color tokens */
   --color-void: var(--void);
   --color-cyber-cyan: var(--cyber-cyan);
   --color-signal-green: var(--signal-green);
@@ -171,7 +171,7 @@
     padding-right: max(1rem, var(--safe-area-inset-right));
   }
 
-  /* Glassmorphism effect for Veri-Fi HUD elements */
+  /* Glassmorphism effect for Wifi-Radar HUD elements */
   .bg-glass {
     background: rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(12px);
@@ -188,7 +188,7 @@
   }
 }
 
-/* Custom animations for Veri-Fi interactions */
+/* Custom animations for Wifi-Radar interactions */
 @keyframes slide-up {
   from {
     transform: translateY(100%);

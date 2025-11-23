@@ -1,8 +1,8 @@
-## Veri-Fi Frontend
+## Wifi-Radar Frontend
 
 ### Overview
 
-This directory contains the **Next.js 16 / React 19 / TypeScript** frontend for Veri-Fi, built with the App Router (`app/`), Tailwind CSS v4, and a shadcn-style component library on top of Radix UI primitives.
+This directory contains the **Next.js 16 / React 19 / TypeScript** frontend for Wifi-Radar, built with the App Router (`app/`), Tailwind CSS v4, and a shadcn-style component library on top of Radix UI primitives.
 
 ### Tech stack
 

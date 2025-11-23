@@ -12,8 +12,27 @@ const _spaceGrotesk = Space_Grotesk({ subsets: ["latin"] })
 const _jetbrainsMono = JetBrains_Mono({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Veri-Fi | Trustless Connectivity Verification",
+  title: "Wifi-Radar | Trustless Connectivity Verification",
   description: "Map-based WiFi signal verification powered by Web3. Discover, verify, and earn rewards for connectivity data.",
+  openGraph: {
+    title: "Wifi-Radar | Trustless Connectivity Verification",
+    description: "Map-based WiFi signal verification powered by Web3. Discover, verify, and earn rewards for connectivity data.",
+    images: [
+      {
+        url: "/logo_verifi.png",
+        width: 1200,
+        height: 630,
+        alt: "Wifi-Radar",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Wifi-Radar | Trustless Connectivity Verification",
+    description: "Map-based WiFi signal verification powered by Web3. Discover, verify, and earn rewards for connectivity data.",
+    images: ["/logo_verifi.png"],
+  },
   viewport: {
     width: "device-width",
     initialScale: 1,
@@ -24,7 +43,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Veri-Fi",
+    title: "Wifi-Radar",
   },
   icons: {
     icon: [
@@ -37,8 +56,8 @@ export const metadata: Metadata = {
         media: "(prefers-color-scheme: dark)",
       },
       {
-        url: "/icon.svg",
-        type: "image/svg+xml",
+        url: "/logo_verifi.png",
+        type: "image/png",
       },
     ],
     apple: "/apple-icon.png",

@@ -1,6 +1,6 @@
 "use client"
 
-import { Wifi } from "lucide-react"
+import Image from "next/image"
 import { WalletButton } from "@/components/wallet-button"
 
 export function TopNav() {
@@ -9,8 +9,14 @@ export function TopNav() {
       <div className="flex items-center justify-between pointer-events-auto">
         {/* Logo */}
         <div className="inline-flex items-center justify-center gap-1.5 md:gap-2 h-7 md:h-8 rounded-md px-2 md:px-3 bg-primary text-primary-foreground hover:bg-primary/90 active:bg-primary/80 touch-manipulation">
-          <Wifi className="h-4 w-4 md:h-5 md:w-5 shrink-0" />
-          <span className="font-space-grotesk text-base md:text-xl font-bold">Veri-Fi</span>
+          <Image 
+            src="/logo_verifi-removebg.png" 
+            alt="Wifi-Radar" 
+            width={20} 
+            height={20} 
+            className="h-4 w-4 md:h-5 md:w-5 shrink-0 object-contain"
+          />
+          <span className="font-space-grotesk text-base md:text-xl font-bold">Wifi-Radar</span>
         </div>
 
         {/* Wallet Connect with Privy */}

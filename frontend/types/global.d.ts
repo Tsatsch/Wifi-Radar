@@ -1,5 +1,5 @@
 /**
- * Global type declarations for the Veri-Fi frontend application
+ * Global type declarations for the Wifi-Radar frontend application
  */
 
 import type { ExternalProvider } from "ethers";

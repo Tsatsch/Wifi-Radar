@@ -17,7 +17,7 @@ interface BottomControlsProps {
 
 export function BottomControls({ onAddNew, isScanning, isWalletConnected = false }: BottomControlsProps) {
   return (
-    <div className="absolute bottom-4 left-0 right-0 z-40 flex justify-center pb-safe md:bottom-8 md:pb-0">
+    <div className="absolute bottom-20 left-0 right-0 z-40 flex justify-center pb-safe md:bottom-8 md:pb-0">
       <div className="flex items-center gap-3 md:gap-4">
         {/* Secondary Controls */}
         <Button 

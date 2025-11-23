@@ -50,7 +50,7 @@ export function WalletDebugPanel() {
 
     try {
       console.log("🧪 Testing message signing...")
-      const testMessage = "Hello from Veri-Fi! Testing CDP wallet signing."
+      const testMessage = "Hello from Wifi-Radar! Testing CDP wallet signing."
       
       // Sign using CDP's native hook
       const result = await signEvmMessage({
@@ -96,7 +96,7 @@ export function WalletDebugPanel() {
       
       // Example EIP-712 typed data
       const domain = {
-        name: "Veri-Fi Test",
+        name: "Wifi-Radar Test",
         version: "1",
         chainId: 84532, // Base Sepolia
       }
