@@ -1,17 +1,18 @@
 "use client"
 
-import { X } from "lucide-react"
+import { X, MapPin } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { StarRating } from "@/components/ui/star-rating"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useToast } from "@/hooks/use-toast"
 import type { SpeedTestResult } from "@/lib/speed-test"
 
 interface WiFiFormModalProps {
   speed: number
   location: { lat: number; lng: number } | null
+  customLocation?: { lat: number; lng: number } | null
   isLoading?: boolean
   walletAddress: string | null
   measurementDetails?: Pick<SpeedTestResult, "method" | "methods">
@@ -31,28 +32,70 @@ export interface WiFiFormData {
 export function WiFiFormModal({
   speed,
   location,
+  customLocation,
   isLoading = false,
   walletAddress,
   measurementDetails,
   onClose,
   onSubmit,
 }: WiFiFormModalProps) {
-  const [wifiName, setWifiName] = useState("")
   const [satisfaction, setSatisfaction] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [locationAddress, setLocationAddress] = useState<string>("")
+  const [wifiName, setWifiName] = useState<string>("WiFi Measurement")
+  const [loadingAddress, setLoadingAddress] = useState(true)
   const { toast } = useToast()
+
+  // Use custom location (clicked on map) if provided, otherwise use user's GPS location
+  const actualLocation = customLocation || location
+
+  console.log("📍 WiFi Form Modal - Locations:", {
+    customLocation,
+    location,
+    actualLocation,
+  })
+
+  // Fetch address from coordinates and auto-generate WiFi name
+  useEffect(() => {
+    const fetchAddress = async () => {
+      if (!actualLocation) {
+        setLoadingAddress(false)
+        return
+      }
+
+      try {
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?latlng=${actualLocation.lat},${actualLocation.lng}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`
+        )
+        const data = await response.json()
+
+        if (data.results && data.results.length > 0) {
+          const address = data.results[0].formatted_address
+          setLocationAddress(address)
+          
+          // Auto-generate wifiName from address components
+          const addressComponents = data.results[0].address_components
+          const locality = addressComponents.find((c: any) => 
+            c.types.includes("locality") || c.types.includes("sublocality")
+          )?.long_name || ""
+          const route = addressComponents.find((c: any) => 
+            c.types.includes("route")
+          )?.short_name || ""
+          
+          setWifiName(`WiFi at ${route || locality || "location"}`)
+        }
+      } catch (error) {
+        console.error("Error fetching address:", error)
+      } finally {
+        setLoadingAddress(false)
+      }
+    }
+
+    fetchAddress()
+  }, [actualLocation])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!wifiName.trim()) {
-      toast({
-        title: "WiFi name required",
-        description: "Please enter a name for your WiFi network",
-        variant: "destructive",
-      })
-      return
-    }
 
     if (satisfaction === 0) {
       toast({
@@ -68,7 +111,7 @@ export function WiFiFormModal({
       const formData = {
         wifiName,
         speed,
-        location,
+        location: actualLocation,
         satisfaction,
         walletAddress,
         // ISO 8601 string in UTC (Date.toISOString() is always UTC)
@@ -104,20 +147,28 @@ export function WiFiFormModal({
           </h3>
 
           <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
-            {/* WiFi Name */}
+            {/* Location Address Display */}
             <div className="space-y-2">
-              <Label htmlFor="wifi-name" className="text-sm md:text-base text-foreground/80">
-                WiFi Network Name
+              <Label className="text-sm md:text-base text-foreground/80 flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Measurement Location
               </Label>
-              <Input
-                id="wifi-name"
-                type="text"
-                placeholder="Enter network name"
-                value={wifiName}
-                onChange={(e) => setWifiName(e.target.value)}
-                disabled={isLoading}
-                className="h-11 md:h-10 bg-void/40 border-foreground/20 text-foreground placeholder:text-foreground/40 disabled:opacity-50 text-base"
-              />
+              <div className="rounded-lg bg-void/40 border border-cyber-cyan/20 px-4 py-3 min-h-[52px]">
+                {loadingAddress ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-cyber-cyan border-t-transparent" />
+                    <span className="text-sm text-foreground/60">Loading address...</span>
+                  </div>
+                ) : locationAddress ? (
+                  <p className="text-sm md:text-base text-foreground">{locationAddress}</p>
+                ) : actualLocation ? (
+                  <p className="text-xs text-foreground/60">
+                    {actualLocation.lat.toFixed(6)}, {actualLocation.lng.toFixed(6)}
+                  </p>
+                ) : (
+                  <p className="text-sm text-foreground/60">Location not available</p>
+                )}
+              </div>
             </div>
 
             {/* Speed (Read-only) */}
