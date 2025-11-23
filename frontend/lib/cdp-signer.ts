@@ -114,7 +114,7 @@ export class CDPSigner extends AbstractSigner {
     
     const primaryType = Object.keys(types).find(key => key !== 'EIP712Domain') || 'Message';
     
-    console.log("🔏 CDP Signer - Signing typed data:", {
+    console.log("CDP Signer - Signing typed data:", {
       address: this._address,
       primaryType,
       domainName: serializedDomain.name,
@@ -135,7 +135,7 @@ export class CDPSigner extends AbstractSigner {
       typedData: typedDataObject,
     };
     
-    console.log('🔏 CDP Signer - Signing with typedData:', {
+    console.log('CDP Signer - Signing with typedData:', {
       evmAccount: this._address,
       typedDataKeys: Object.keys(typedDataObject),
       domainChainId: serializedDomain.chainId,
@@ -145,14 +145,14 @@ export class CDPSigner extends AbstractSigner {
     try {
       const result = await this._signTypedDataFn(options);
       
-      console.log("✅ CDP Signer - Typed data signed:", {
+      console.log(" CDP Signer - Typed data signed:", {
         signatureLength: result.signature?.length,
         signaturePreview: result.signature?.slice(0, 20) + "...",
       });
       
       return result.signature;
     } catch (error: any) {
-      console.error("❌ CDP Signer - Typed data signing failed:", {
+      console.error("CDP Signer - Typed data signing failed:", {
         error: error.message,
         evmAccount: this._address,
         errorStack: error.stack,
@@ -175,7 +175,7 @@ export class CDPSigner extends AbstractSigner {
   }
 
   async sendTransaction(transaction: TransactionRequest): Promise<any> {
-    console.log("📤 CDP Signer - Sending transaction:", {
+    console.log("CDP Signer - Sending transaction:", {
       from: this._address,
       to: transaction.to,
       value: transaction.value?.toString(),
@@ -187,7 +187,7 @@ export class CDPSigner extends AbstractSigner {
     // Try paymaster first if configured and wallet provider is available
     if (isPaymasterConfigured() && this._walletProvider) {
       try {
-        console.log("🚀 Attempting paymaster-sponsored transaction...");
+        console.log("Attempting paymaster-sponsored transaction...");
         const txHash = await sendSponsoredTransactionViaProvider(
           this._walletProvider,
           this._address,
@@ -201,7 +201,7 @@ export class CDPSigner extends AbstractSigner {
           }
         );
         
-        console.log("✅ Paymaster transaction successful:", txHash);
+        console.log("Paymaster transaction successful:", txHash);
         
         // Return a transaction response-like object
         return {
@@ -228,12 +228,12 @@ export class CDPSigner extends AbstractSigner {
         }
         
         // Log error but fall through to regular transaction
-        console.warn("⚠️ Paymaster transaction failed, falling back to regular transaction:", paymasterError);
+        console.warn(" Paymaster transaction failed, falling back to regular transaction:", paymasterError);
       }
     }
     
     // Fall back to regular transaction (or use if paymaster not configured)
-    console.log("📤 Using regular CDP transaction...");
+    console.log(" Using regular CDP transaction...");
     
     // Serialize the transaction to handle BigInt values
     const serializedTransaction = serializeBigInt({
@@ -254,7 +254,7 @@ export class CDPSigner extends AbstractSigner {
       transaction: serializedTransaction,
     });
     
-    console.log("✅ CDP Signer - Transaction sent:", {
+    console.log(" CDP Signer - Transaction sent:", {
       hash: result.transactionHash,
     });
     
